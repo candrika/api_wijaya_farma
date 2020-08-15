@@ -1,0 +1,38 @@
+if($qtax['is_tax_ppn']==1 && $qtax['is_tax_pph23']==1){
+        	 		//PPN dan PPH 
+                   		$idaccount = $qtax['coa_ppn_purchase_id'];
+                    	$tax_amount = $total_before_tax*($qtax['coa_ppn_rate']/100);
+			        	$total_tax+= $tax_amount;
+				        $curBalanceK = $this->m_account->getCurrBalance($idaccount, $idunit);
+				        $newBalanceK = $curBalanceK + $tax_amount;
+
+				        $ditem = array(
+				            'idjournal' => $idjournal,
+				            'idaccount' => $idaccount,
+				            'debit' => 0,
+				            'credit' => $tax_amount,
+				            'lastbalance' => $curBalanceK,
+				            'currbalance' => $newBalanceK
+				        );
+				        $this->db->insert('journalitem', $ditem);
+				        $this->m_account->saveNewBalance($idaccount, $newBalanceK, $idunit,$userin);
+				        $this->m_account->saveAccountLog($idunit,$idaccount,$tax_amount,0,$date,$idjournal,$userin);
+
+				        $idaccount = $qtax['coa_pph23_purchase_id'];
+                    	$tax_amount = $total_before_tax*($qtax['coa_pph23_rate']/100);
+			        	$total_tax+= $tax_amount;
+				        $curBalanceK = $this->m_account->getCurrBalance($idaccount, $idunit);
+				        $newBalanceK = $curBalanceK - $tax_amount;
+
+				        $ditem = array(
+				            'idjournal' => $idjournal,
+				            'idaccount' => $idaccount,
+				            'debit' => $tax_amount,
+				            'credit' => 0,
+				            'lastbalance' => $curBalanceK,
+				            'currbalance' => $newBalanceK
+				        );
+				        $this->db->insert('journalitem', $ditem);
+				        $this->m_account->saveNewBalance($idaccount, $newBalanceK, $idunit,$userin);
+				        $this->m_account->saveAccountLog($idunit,$idaccount,0,$tax_amount,$date,$idjournal,$userin);
+                }

@@ -1,0 +1,17 @@
+<?php
+	class M_asset extends CI_Model{
+
+		function load_asset(){
+
+			$q=$this->db->get('asset');
+
+			return $q;
+		}
+
+		function save_journal_asset($asset_id,$idjouranl){
+			$data=array('asset_id'=>$asset_id,'journal_id'=>$idjouranl);
+			$this->db->insert('asset_journal',$data);
+		}
+		
+	}
+?>
