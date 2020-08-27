@@ -198,6 +198,7 @@ class Inventory extends MY_Controller {
             'location_id'=>$this->post('product_location_id') !='' ? $this->post('product_location_id'):null,
             'idunit'=>$this->post('idunit'),
             'product_id' => $this->m_data->getPrimaryID($this->post('product_id'),'product','product_id'),
+            'vendor_id' => $this->m_data->getPrimaryID($this->post('vendor_id'),'product','vendor_id'),
             'coa_inventory_id'=> $this->post('coa_inventory_id') !='' ? $this->post('coa_inventory_id'):null,
             'expired_date'=>$this->post('expired_date') !='' ? backdate2($this->post('expired_date')):null,
         );
@@ -277,6 +278,7 @@ class Inventory extends MY_Controller {
             }
         } else {
             //update
+            // print_r($data);die;
             $this->db->where('product_id',$product_id);
             $this->db->update('product',$data);
             // $this->db->last_query();
@@ -340,6 +342,7 @@ class Inventory extends MY_Controller {
             'no_barcode' => $this->post('no_barcode') != '' ? $this->post('no_barcode') : null,
             'no_supplier' => $this->post('no_supplier') != '' ? $this->post('no_supplier') : null,
             'status'=>$this->post('status'),
+            'vendor_id' => $this->m_data->getPrimaryID($this->post('vendor_id'),'product','vendor_id'),            
             'idunit'=>$this->user_data->idunit
         );
 

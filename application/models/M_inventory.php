@@ -82,6 +82,8 @@ class M_inventory extends CI_Model {
 				coa_tax_sales_id,
 				coa_tax_purchase_id,is_consignment,
 				consignment_base_price,consignment_owner_id,
+				a.vendor_id,
+				m.vendor_name,
 				-- consignment_owner_type_id,
 				a.expired_date,
 			    a.product_unit_id,a.product_balance,a.coa_inventory_id,
@@ -95,7 +97,8 @@ class M_inventory extends CI_Model {
 				left join product_unit j ON a.product_unit_id = j.product_unit_id
 				left join account k on a.coa_inventory_id=k.idaccount and a.idunit = k.idunit
 				left join product_location l on a.location_id=l.product_location_id 
-				where true and a.deleted = 0 and a.idunit = $idunit $wer order by a.product_id desc");
+				left join product_vendor m on a.vendor_id=m.vendor_id 
+				where true and a.deleted = 0 and a.idunit = $idunit $wer order by a.product_id asc");
 
 		$q = $this->db->query("$sql	".$this->common_lib->build_limit_offset());
 		$qtotal = $this->db->query("$sql");

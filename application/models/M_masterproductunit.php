@@ -43,7 +43,7 @@ class M_masterproductunit extends CI_Model {
     }
 
     function orderBy() {
-        return "";
+        return "order by product_unit_id ASC";
     }
 
     function updateField() { 

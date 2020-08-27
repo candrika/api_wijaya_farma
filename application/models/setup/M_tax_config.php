@@ -16,7 +16,8 @@ class M_tax_config extends CI_Model {
     }
 
     function selectField() {
-        return "a.idtax,a.idunit,a.nametax,a.description,a.rate,a.idunit";
+        return "a.idtax,a.idunit,a.nametax,a.description,a.rate,a.idunit,a.is_tax,a.coa_tax_sales_id,a.coa_tax_purchase_id,
+        b.accname as acc_tax_sales,c.accname as acc_tax_purchace";
     }
 
     function fieldCek(){
@@ -28,7 +29,9 @@ class M_tax_config extends CI_Model {
 
     function query() {
         $query = "select " . $this->selectField() . "
-                    from " . $this->tableName()." a";
+                 from " . $this->tableName()." a ".
+                 "inner join account b on b.idaccount=a.coa_tax_sales_id
+                  inner join account c on c.idaccount=a.coa_tax_purchase_id";
 
         return $query;
     }
@@ -41,16 +44,15 @@ class M_tax_config extends CI_Model {
         return " idtax desc";
     }
 
-    function updateField($post_data) {
+    function updateField() {
         $data = array(
-            // 'idtax' => $this->m_data->getID('bussinestype', 'namebussines', 'idbussinestype', $this->input->post('namebussines')),
-            'idtax' => $this->m_data->getPrimaryID2($post_data[$this->pkField()],$this->tableName(),$this->pkField()),
-            'nametax' => $post_data['nametax'],
-            'description' => $post_data['description'],
-            'rate' => $post_data['rate']=='' ? null : $post_data['rate'],
-            'coa_ap_id' => $post_data['coa_ap_id']=='' ? null : $post_data['coa_ap_id'],
-            'coa_cash_id' => $post_data['coa_cash_id']=='' ? null : $post_data['coa_cash_id'],
-            'coa_expense_id' => $post_data['coa_expense_id']=='' ? null : $post_data['coa_expense_id'],
+            'idtax' => $this->m_data->getPrimaryID2($this->input->post($this->pkField()),$this->tableName(),$this->pkField()),
+            'nametax' => $this->input->post('nametax'),
+            'description' => $this->input->post('description'),
+            'rate' => $this->input->post('rate')=='' ? null : $this->input->post('rate'),
+            'is_tax' => $this->input->post('is_tax')=='' ? null : $this->input->post('is_tax'),
+            'coa_tax_sales_id' => $this->input->post('coa_tax_sales_id')=='' ? null : $this->input->post('coa_tax_sales_id'),
+            'coa_tax_purchase_id' => $this->input->post('coa_tax_purchase_id')=='' ? null : $this->input->post('coa_tax_purchase_id'),
             'idunit' => $this->user_data->idunit
         );
         return $data;
