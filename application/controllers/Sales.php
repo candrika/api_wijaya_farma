@@ -626,7 +626,7 @@ class Sales extends MY_Controller {
         $v = $this->m_sales->remove($this->post('id'),$this->user_data->user_id);
         $this->stock_after_sale($this->post('id'),$type=10);
 
-        $this->m_inventory->remove_stock_history($this->delete('id'));
+        // $this->m_inventory->remove_stock_history($this->delete('id'));
 
         if($v['success']){
             $this->response($v, REST_Controller::HTTP_OK);
@@ -1055,98 +1055,67 @@ class Sales extends MY_Controller {
     }
 
     function stock_after_sale($id,$type){
-        $this->db->trans_begin();
-        
-        $sales_info = $this->db->get_where('salesitem', array('idsales' =>$id));
-        
-        foreach ($sales_info->result() as $key => $v) {
-              # code...
-
-            $product_info = $this->db->get_where('product', array('product_id' =>$v->product_id))->result();
-
-            if($product_info[0]->inventory_class_id!=1){
-                //bukan barang, lanjut!
+       //get sales item infon
+        $salesinfo  = "SELECT a.* FROM salesitem a
+                        INNER JOIN sales b on b.idsales=a.idsales
+                        WHERE b.idsales=$id";
+        //query data 
+        $q = $this->db->query($salesinfo)->result();                    
+        foreach ($q as $key => $value) {
+            # code...
+            $product = $this->db->get_where('product',array('product_id'=>$value->product_id))->row();
+            
+            //check product type
+            if($product->inventory_class_id !=1){
                 continue;
             }
-                
-            $product_name = $product_info[0]->product_name;
-            $new_stock    = $product_info[0]->stock_available-$v->qty;
 
-            $params = array(
-                  'idunit' => $this->post('idunit'),
-                  'prefix' => 'STCK',
-                  'table' => 'stock_history',
-                  'fieldpk' => 'stock_history_id',
-                  'fieldname' => 'no_transaction',
-                  'extraparams'=> null,
+            //making prefix no
+            $params=array(
+                'idunit' => $this->post('idunit'),
+                'prefix' => 'STCK',
+                'table' => 'stock_history',
+                'fieldpk' => 'stock_history_id',
+                'fieldname' => 'no_transaction',
+                'extraparams'=> null,
             );
 
-            $notrx = $this->m_data->getNextNoArticle($params);
-                         if($type==8){
-                $type_adjustment=$type;
-                $trx_qty=$v->qty;
-                $new_stock       = $product_info[0]->stock_available-$v->qty;
+            $no = $this->m_data->getNextNoArticle($params);
 
-                if($product_info[0]->is_purchasable*1==2){
+            //declarated
+            $currStock = $product->stock_available;
+            $trxStock  = $value->qty;
 
-                    $product_balance = $new_stock * $product_info[0]->buy_price;
-
-                }
-
-            }else if($type==1){
-                $type_adjustment=$type;
-                $trx_qty=$v->qty;
-                $new_stock    = $product_info[0]->stock_available-$v->qty;
-
-                if($product_info[0]->is_purchasable*1==2){
-
-                    $product_balance = $new_stock * $product_info[0]->buy_price;
-
-                }
-
-            }else if($type==10){
-                $type_adjustment=$type;
-                if(isset($return_info) and coun($return_info)>0){
-                    $trx_qty      = $return_info->total_qty_return;
-                    $new_stock    = $product_info[0]->stock_available-$trx_qty;
-                }
-                
-                $trx_qty=$v->qty;
-                $new_stock    = $product_info[0]->stock_available+$v->qty;
-
-                if($product_info[0]->is_purchasable*1==2){
-
-                    $product_balance = $new_stock * $product_info[0]->buy_price;
-
-                }
+            if($type==8){
+                //for sales chase
+                $newStock = $currStock-$trxStock;      
             }
 
-            $data_stock=array(
+            else if($type==10){
+                //for sales cancelation or deleting sales
+                $newStock = $currStock+$trxStock;
+            }
+
+            if($product->is_purchasable==2){
+                $product_balance = $newStock*$product->buy_price;
+            }
+
+            $dataStock=array(
                 'stock_history_id'=>$this->m_data->getPrimaryID2(null,'stock_history','stock_history_id'),
-                'product_id'=>$v->product_id,
-                'type_adjustment'=>$type_adjustment,
-                'no_transaction'=>$notrx,
+                'product_id'=>$value->product_id,
+                'type_adjustment'=>$type,
+                'no_transaction'=>$no,
                 'datein'=>date('Y-m-d H:i'),
-                'current_qty'=>$product_info[0]->stock_available,
-                'trx_qty'=>$trx_qty,
-                'new_qty'=>$new_stock,
+                'current_qty'=>$currStock,
+                'trx_qty'=>$trxStock,
+                'new_qty'=>$newStock,
                 'reference_id'=>$id
             );
 
-           
             //insert stock historis
-            $this->db->insert('stock_history',$data_stock); 
-            //end insert
-
-
-            //update stock available 
-            $this->db->where('product_id',$v->product_id);
-            $this->db->update('product',array(
-                'stock_available'=>$new_stock
-            ));
-            //end update 
-
-        }  
+            $this->db->insert('stock_history',$dataStock); 
+            //end insert    
+        }
 
         if($this->db->trans_status()===false){
             $this->db->trans_rollback();
