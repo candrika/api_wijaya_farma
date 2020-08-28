@@ -1260,14 +1260,10 @@ class Purchase extends MY_Controller {
         $i=0;
 
         foreach ($d as $value) {
-                # code...
-                
-             if($value['customer_type']==1){
-                    $value['suppier_name'] = $value['member_name'];
-             } else {
-                    $value['suppier_name'] = $value['namesupplier'];
-             }
-             $value['no_purchase_receipt']=$no_purchase_receipt;
+            # code...        
+            $value['suppier_name'] = $value['namecustomer'];
+             
+            $value['no_purchase_receipt']=$no_purchase_receipt;
             $data[$i]=$value;
 
              $i++;

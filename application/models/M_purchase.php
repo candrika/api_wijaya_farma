@@ -36,15 +36,15 @@ class M_purchase extends CI_Model {
 								a.paidtoday,a.unpaid_amount,a.comments,a.userin,a.datein,a.status as status,a.idunit,a.date_purchase,a.no_purchase_order,
 								a.include_tax,a.total_dpp,a.pos_payment_type_id,a.unpaid_amount,a.id_member,a.comments,a.total,
 								d.namaunit,
-								COALESCE(NULLIF(a.other_fee ,NULL) , 0 ) as other_fee,c.code,c.namesupplier,c.companyaddress,c.telephone,c.handphone,
+								COALESCE(NULLIF(a.other_fee ,NULL) , 0 ) as other_fee,c.nocustomer,c.namecustomer,c.address,c.telephone,c.handphone,
 								a.invoice_date,a.due_date,a.invoice_status,g.status as status_purchase_receipt,g.purchase_receipt_id,g.memo as memo_receipt,g.receipt_date
 								from purchase a
-								join supplier c ON c.idsupplier=a.idcustomer
+								join customer c ON c.idcustomer=a.idcustomer
 								join unit d ON a.idunit = d.idunit
 								left join purchase_receipt g ON g.purchase_id=a.purchase_id
 								where true and (a.display is null or a.display = 1) and a.invoice_no is not null $wer
 								order by a.purchase_id desc");
-		
+		// echo $this->db->last_query();
 		$r = $q->result_array();
 		$data = array();
 		$i=0;
@@ -393,7 +393,7 @@ class M_purchase extends CI_Model {
 		$q = $this->db->query(" SELECT 
 									a.purchase_receipt_id,a.purchase_id,a.status as status_purchase_receipt,a.purchase_receipt_no,b.no_purchase_order,a.memo,b.date_purchase,a.total_received,
 									a.receipt_date,b.idcustomer,b.customer_type,b.id_member,
-									c.namesupplier,c.companyaddress,c.telephone,c.handphone,
+									c.namecustomer,c.address,c.telephone,c.handphone,
 									a.receipt_date,a.total_qty_received,
 									a.total_rest_qty
 							    FROM 
@@ -401,7 +401,7 @@ class M_purchase extends CI_Model {
 								JOIN 
 									purchase b ON b.purchase_id=a.purchase_id
 								LEFT JOIN
-									supplier c ON c.idsupplier=b.idcustomer
+									customer c ON c.idcustomer=b.idcustomer
 								WHERE
 									b.idunit=$idunit $wer 
 								ORDER BY a.purchase_receipt_id DESC ");
@@ -482,7 +482,7 @@ class M_purchase extends CI_Model {
 	            	
 	            	// print_r($qhis);
 
-	            	if(count($qhis->{'stock'}) >0){
+	            	if($qhis->stock >0){
 	            		// echo "xxasa";
 	            		$stock = $qhis->stock;
 	            		$new_stock   = $v['qty_received']+$stock; 
