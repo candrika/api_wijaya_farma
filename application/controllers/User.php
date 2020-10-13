@@ -158,7 +158,7 @@ class User extends MY_Controller {
             $this->response(array('success'=>false,'message'=>'password not found'), REST_Controller::HTTP_NOT_FOUND); // BAD_REQUEST (400) being the HTTP response code
         }
         $cek = $this->m_user->cekUser($userid,$password);
-
+        
         $this->response($cek, REST_Controller::HTTP_OK);
     }
 

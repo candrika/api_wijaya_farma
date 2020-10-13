@@ -629,26 +629,24 @@ class Inventory extends MY_Controller {
             # code...
             $q = $this->db->query("SELECT 
                                     a.product_type_id,a.business_id,a.product_name,a.no_barcode,a.no_sku,a.buy_price,
-                                    a.retail_price,a.retail_price_member,a.stock_available,b.business_code
-                                    ,c.accnumber as purchase_acc,d.accnumber as sales_acc,a.inventory_class_id
+                                    a.retail_price,a.retail_price_member,a.stock_available,c.accnumber as purchase_acc,d.accnumber as sales_acc,a.inventory_class_id
                                     FROM
                                              product a
-                                    JOIN 
-                                             business b on b.business_id=a.business_id  
                                     LEFT JOIN 
                                              account c on c.idaccount=a.coa_purchase_id
                                     LEFT JOIN 
                                             account d on d.idaccount=a.coa_sales_id
-                                    WHERE   a.idunit=".$this->get('idunit')." and a.deleted=0 GROUP BY product_id,b.business_id,c.accnumber,d.accnumber");
+                                    WHERE   a.idunit=".$this->get('idunit')." and a.deleted=0 GROUP BY product_id,c.accnumber,d.accnumber order by product_id ASC");
             
-            
+            // echo $this->db->last_query();
+            // print_r($q->result_array());die;
             if($q->num_rows()>0){
                 $rq = $q->result_array();
+                // print_r($rq);die;
                 foreach ($rq as $key => $d) {
                     $sheet->setCellValue('A'.$i,$d['no_sku']);
                     $sheet->setCellValue('B'.$i,$d['no_barcode']);
                     $sheet->setCellValue('C'.$i,$d['product_name']);
-                    $sheet->setCellValue('D'.$i,$d['business_code']);
                     $sheet->setCellValue('E'.$i,$d['inventory_class_id']);
                     $sheet->setCellValue('F'.$i,$d['stock_available']);
                     $sheet->setCellValue('G'.$i,$d['buy_price']);
@@ -691,7 +689,7 @@ class Inventory extends MY_Controller {
                                     LEFT JOIN
                                             product_location e on a.location_id=e.product_location_id
 
-                                    WHERE   a.idunit=".$this->get('idunit')." and a.deleted=0 and a.inventory_class_id=$inventory_class_id GROUP BY product_id");
+                                    WHERE   a.idunit=".$this->get('idunit')." and a.deleted=0 and a.inventory_class_id=$inventory_class_id GROUP BY product_id order by product_id ASC");
         
         // print_r($results->result());die();
 
@@ -711,7 +709,7 @@ class Inventory extends MY_Controller {
         //generate cell value
         foreach ($results->result() as $key => $d) {
             # code...
-            // print_r($d);
+            // print_r($d);die;
             if($d->{'location_id'}!=''){
                 $rak = $this->db->query("SELECT * FROM product_location WHERE deleted=0 and idunit=".$idunit." and status=1 and product_location_id=".$d->{'location_id'})->row();
                 

@@ -488,9 +488,12 @@ class Employee extends MY_Controller {
         $qcek = $this->db->get_where('employee',array('idemployee'=>$employee_id,'idunit'=>$this->put('idunit')));
         if($qcek->num_rows()>0){
             $rcek = $qcek->row();
-
+            // $get
             $this->db->where('user_id',$rcek->user_id);
-            $this->db->update('sys_user',array('password'=>$repeat_new_password));
+            $this->db->update('sys_user',array(
+                'password'=>$repeat_new_password,
+                // 'api_key' =>base64_encode(.':'.$repeat_new_password)
+            ));
 
             if($this->db->affected_rows()>0){
                  $message = [

@@ -309,7 +309,7 @@ class M_data extends CI_Model {
 
             $decode =base64_decode($apikey);
             $arr = explode(':',$decode);
-            // echo $arr;
+            // print_r($arr);
             $username = $arr[0];
             $password = $arr[1];
 

@@ -279,125 +279,67 @@ class Purchase extends MY_Controller {
 
 	}
 
-     private function summary_purchase_inv($include_tax,$shipping_cost,$purchase_item,$tax_id){
+    private function summary_purchase_inv($include_tax,$shipping_cost,$purchase_item,$tax_id){
+
+        $this->load->model('setup/M_tax_config','tax_ppn');
 
         $sub_total = 0;
         $total_disc = 0;
-        $dpp = 0;
         $total_tax = 0;
-        $total_sales = 0;
-        $rate_tax = 0;
-        $nametax=null;
-        $is_tax_ppn=null;
-        $is_tax_pph23=null;
-        $coa_ppn_rate=0;
-        $coa_pph23_rate=0;
 
-        if($tax_id!=null && $tax_id!=''){
-            
-            $url = $this->rest_client;
-            $response = $url->get('preferences/tax?key='.COOP_APIKEY.'&id='.$tax_id,[
-                'auth'=>[COOP_APIKEY,''],
-                'form_params'=>array('id'=>$tax_id),
-                'http_errors'=>true
-            ]);
+        $sql   = $this->tax_ppn->query();
+        $where = $this->tax_ppn->whereQuery($tax_id);
+        $q = $this->db->query($sql.' where '.$where);
 
-            $b = json_decode($response->getBody());
-            $q = $b->rows[0];
-            // print_r($q);
-            $nametax  = $q->{'nametax'};
+        if($q->num_rows() >0){
 
-            $rate_tax = $q->{'tax_rate'};
-            
-            $is_tax_ppn=$q->{'is_tax_ppn'};
-            $is_tax_pph23=$q->{'is_tax_pph23'};
+            $r = $q->row();
 
-            $coa_ppn_rate=$q->{'coa_ppn_rate'};
-            $coa_pph23_rate=$q->{'coa_pph23_rate'};
+            $total_sales      = 0;
+            $rate_tax         = $r->rate;
+            $nametax          = $r->nametax;
+            $is_tax           = $r->is_tax;
+            $coa_tax_sales    = $r->coa_tax_sales_id;
+            $coa_tax_purchase = $r->coa_tax_sales_id;
+
+        }else{
+
+            $total_sales      = 0;
+            $rate_tax         = 0;
+            $nametax          = 0;
+            $is_tax           = 0;
+            $coa_tax_sales    = 0;
+            $coa_tax_purchase = 0;
         }
 
         foreach ($purchase_item as $key => $v) {
-            $total = $v->{'qty'}*$v->{'price'};
+            # code...
+            $total    = $v->{'qty'}*$v->{'price'};
             $discount = ($total/100)*$v->{'disc'};
 
-            $total_disc+=$discount;
+            $total_disc += $discount;
 
-            if((isset($is_tax_ppn) && isset($is_tax_pph23)) && ($is_tax_ppn==1 && $is_tax_pph23==1)){
-               // echo $total; 
-               $ppn_tax          = $total*($coa_ppn_rate/100);
-               // $total_tax_pnn   += $total+$ppn_tax; 
-               $pph23_tax        = $total*($coa_pph23_rate/100);
-               // $total_tax_pph23 += $pph23_tax;
+            $tax = $total*($rate_tax/100);
+            $total_tax += $tax;
 
-               $tax        = $ppn_tax+$pph23_tax;
-               $total_tax += $tax;
-               // echo $tax;
-            }
-
-            if ((isset($is_tax_ppn) && isset($is_tax_pph23)) && ($is_tax_ppn==1 && $is_tax_pph23==0)) {
-                $tax = $total*($coa_ppn_rate/100);
-                $total_tax+=$tax;
+            $sub_total +=$total;
             
-            }if((isset($is_tax_ppn) && isset($is_tax_pph23)) && ($is_tax_ppn==0 && $is_tax_pph23==1)){
-                $tax = $total*($coa_pph23_rate/100);
-                $total_tax+=$tax;
-            }
-            
-            if((isset($is_tax_ppn) && isset($is_tax_pph23)) && ($is_tax_ppn==0 && $is_tax_pph23==0)){
-                $tax = $total*($rate_tax/100);
-                $total_tax+=$tax;
-            }
-
-            $sub_total+=$total;
-
-            // if($include_tax==1){
-            //     $total_per_row = ($total - $discount);
-            // } else {
-            //     $total_per_row = ($total - $discount)+$tax;
-            // }
+            $grand_total = $total+$total_tax-$discount+$shipping_cost;
         }
 
-        $total = ($sub_total-$total_disc)+$shipping_cost;
-        if($include_tax==1){
-            $grand_total = $total;
-        } else {
-
-            if((isset($is_tax_ppn) && isset($is_tax_pph23)) && ($is_tax_ppn==1 && $is_tax_pph23==0)){
-                $grand_total = $total+$total_tax;
-            }
-
-            elseif((isset($is_tax_ppn) && isset($is_tax_pph23)) && ($is_tax_ppn==0 && $is_tax_pph23==1)){
-                $grand_total = $total;
-
-            }
-
-            elseif((isset($is_tax_ppn) && isset($is_tax_pph23)) && ($is_tax_ppn==1 && $is_tax_pph23==1)){
-                $grand_total = $total+$ppn_tax-$pph23_tax;
-            }
-
-            elseif((isset($is_tax_ppn) && isset($is_tax_pph23)) && ($is_tax_ppn==0 && $is_tax_pph23==0)){
-                // $tax = $total*($rate_tax/100);
-                 $grand_total = $total+$total_tax;
-            }else{
-                $grand_total = $total;
-            }
-        }
-
-        $data = array(
+        $data = [
             'nametax'=>$nametax,
-            'is_tax_ppn'=>$is_tax_ppn,
-            'is_tax_pph23'=>$is_tax_pph23,
-            'coa_ppn_rate' => $coa_ppn_rate,
-            'coa_pph23_rate' => $coa_pph23_rate,
-            'sub_total'=>$sub_total,
-            'total_disc'=>$total_disc,
-            'shipping_cost'=>$shipping_cost,
+            'is_tax'=>$is_tax,
             'total'=>$total,
             'total_tax'=>$total_tax,
-            'grand_total'=>$grand_total
-        );
+            'sub_total'=>$sub_total,
+            'grand_total'=>$grand_total,
+            'total_disc'=>$total_disc,
+            'shipping_cost'=>$shipping_cost,
+        ];
 
         return $data;
+        
     }    
 
 	public function summary_purchase_inv_post(){

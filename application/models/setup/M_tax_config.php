@@ -36,8 +36,11 @@ class M_tax_config extends CI_Model {
         return $query;
     }
 
-    function whereQuery() {
-        return "a.deleted = 0 and a.idunit = ".$this->user_data->idunit;
+    function whereQuery($tax_id=null) {
+       
+        $wer = " and a.idtax=$tax_id";
+        
+        return "a.deleted = 0 and a.idunit = ".$this->user_data->idunit.$wer;
     }
 
     function orderBy() {
